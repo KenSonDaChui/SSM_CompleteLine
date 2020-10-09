@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!--开启扫描-->
+    <context:component-scan base-package="com.jiucheng.service"/>
+    
+    <!--配置连接池linux
+    <bean id="druidDataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://192.168.241.128:3306/my_pratice"/>
+        <property name="username"  value="root"/>
+        <property name="password"  value="root"/>
+    </bean>
+-->
+    <!--配置连接池-->
+    <bean id="druidDataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql:///my_pratice"/>
+        <property name="username"  value="root"/>
+        <property name="password"  value="123456"/>
+    </bean>
+
+    <!--创建代理工厂,生成代理类-->
+    <bean id="sqlSessionFactoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource"  ref="druidDataSource"/>
+        <property name="mapperLocations" value="classpath:mapper/*.xml"/>
+    </bean>
+    <!--包扫描-->
+    <bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactory" ref="sqlSessionFactoryBean"/>
+        <property name="basePackage" value="com.jiucheng.dao"/>
+    </bean>
+
+    <!--事务的控制-->
+    <!--配置事务管理器-->
+    <bean id ="dataSourceTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="druidDataSource"/>
+    </bean>
+    <!--配置事务的通知-->
+    <tx:advice id="txAdvice" transaction-manager="dataSourceTransactionManager">
+    <tx:attributes>
+        <!--配置事务的属性
+　　　　　　　　isolation：事务的隔离级别，默认为数据库的默认级别
+　　　　　　　　propagation：用于指定事务的传播行为。默认值是REQUIRED（增删改使用），表示一定会有事务，读取方法使用SUPPORTS
+　　　　　　　　read-only：用于指定事务是否只读。默认是false，表示读写，读取方法才能使用true
+　　　　　　　　timeout：指定事务的超时时间，默认值-1，表示永不超时。如果指定数值，单位为秒。
+　　　　　　　　no-rollback-for：指定一个异常，如果发生该异常则不回滚，其余异常都回滚。不写则默认所有异常都回滚
+　　　　　　　　rollback-for：指定一个异常，如果发生该异常则回滚，其余异常都不回滚。不写则默认所有异常都回滚
+　　　　　　-->
+        <tx:method name="*" propagation="REQUIRED" read-only="false"/>
+        <tx:method name="find/**" propagation="SUPPORTS" read-only="true"/>
+    </tx:attributes>
+    </tx:advice>
+
+
+    <aop:config>
+        <!--配置连接点-->
+        <aop:pointcut id="pointCut" expression="execution(* com.jiucheng.*.*(..))"/>
+        <!--配置切入点-->
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="pointCut"/>
+        <!--此处可配置前置通知,后置通知,异常通知,最终通知和环绕通知-->
+    </aop:config>
+
+
+    <!--配置异常-->
+    <bean class="com.jiucheng.utils.exception.ExceptionUtils"/>
+</beans>
