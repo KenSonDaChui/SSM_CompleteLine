@@ -45,6 +45,7 @@ public class CityController {
         modelAndView.addObject("list",list);
         modelAndView.setViewName("success");
         return  modelAndView;
+
     }
 
     @RequestMapping("/fileUpload.do")
